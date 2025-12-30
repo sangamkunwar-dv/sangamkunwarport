@@ -12,7 +12,7 @@ export function createClient() {
     console.error("[v0] Supabase URL or Key is missing")
   } else {
     console.log("[v0] Initializing Supabase client with URL:", url)
-  }
+  }z
 
   return createBrowserClient(url, key)
 }
