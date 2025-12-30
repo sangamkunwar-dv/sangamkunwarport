@@ -1,118 +1,119 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
-import { createClient } from "@/lib/supabase/client"
-import AdminSidebar from "@/components/admin/sidebar" 
-import ProjectsManager from "@/components/admin/projects-manager"
-import EventsManager from "@/components/admin/events-manager"
-import CollaboratorsManager from "@/components/admin/collaborators-manager"
-import DashboardOverview from "@/components/admin/dashboard-overview"
-import MessagesManager from "@/components/admin/messages-manager"
-import AdminSettings from "@/components/admin/admin-settings"
-import HeroSettings from "@/components/admin/hero-settings"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { useToast } from "@/hooks/use-toast"
+import React, { useEffect, useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
+import AdminSidebar from "@/components/admin/sidebar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
-type AdminTab = "overview" | "hero" | "projects" | "events" | "collaborators" | "messages" | "settings"
+// Lazy-load heavy admin managers to avoid build errors
+const DashboardOverview = React.lazy(() => import("@/components/admin/dashboard-overview"));
+const ProjectsManager = React.lazy(() => import("@/components/admin/projects-manager"));
+const EventsManager = React.lazy(() => import("@/components/admin/events-manager"));
+const CollaboratorsManager = React.lazy(() => import("@/components/admin/collaborators-manager"));
+const MessagesManager = React.lazy(() => import("@/components/admin/messages-manager"));
+const AdminSettings = React.lazy(() => import("@/components/admin/admin-settings"));
+const HeroSettings = React.lazy(() => import("@/components/admin/hero-settings"));
+
+type AdminTab = "overview" | "hero" | "projects" | "events" | "collaborators" | "messages" | "settings";
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<AdminTab>("overview")
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isSignup, setIsSignup] = useState(false)
-  const [error, setError] = useState("")
-  const router = useRouter()
-  const { toast } = useToast()
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignup, setIsSignup] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+  const { toast } = useToast();
 
-  const ADMIN_EMAIL = "sangamkunwar48@gmail.com"
-  const [supabase, setSupabase] = useState<any>(null)
+  const ADMIN_EMAIL = "sangamkunwar48@gmail.com";
+  const [supabase, setSupabase] = useState<any>(null);
 
-  // Initialize Supabase on client only
+  // Initialize Supabase safely inside useEffect
   useEffect(() => {
-    const sb = createClient()
-    setSupabase(sb)
+    const sb = createClient();
+    setSupabase(sb);
 
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await sb.auth.getSession()
+        const { data: { session } } = await sb.auth.getSession();
         if (session) {
           if (session.user.email !== ADMIN_EMAIL) {
-            await sb.auth.signOut()
-            setError("Access denied: You are not authorized as admin.")
+            await sb.auth.signOut();
+            setError("Access denied: You are not authorized as admin.");
           } else {
-            setUser(session.user)
+            setUser(session.user);
           }
         }
       } catch (err) {
-        console.log("[v0] Auth check failed")
+        console.log("[v0] Auth check failed");
       }
-      setLoading(false)
-    }
+      setLoading(false);
+    };
 
-    checkAuth()
-  }, [])
+    checkAuth();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!supabase) return
-    setLoading(true)
-    setError("")
+    e.preventDefault();
+    if (!supabase) return;
+    setLoading(true);
+    setError("");
 
     try {
       if (isSignup) {
-        const { error } = await supabase.auth.signUp({ email, password })
-        if (error) throw error
-        toast({ title: "Success", description: "Admin account created!" })
-        setIsSignup(false)
-        setEmail("")
-        setPassword("")
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        toast({ title: "Success", description: "Admin account created!" });
+        setIsSignup(false);
+        setEmail("");
+        setPassword("");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw error
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
 
         if (email !== ADMIN_EMAIL) {
-          await supabase.auth.signOut()
-          setError("Access denied: Only admin can login.")
-          toast({ title: "Error", description: "Only admin can login.", variant: "destructive" })
+          await supabase.auth.signOut();
+          setError("Access denied: Only admin can login.");
+          toast({ title: "Error", description: "Only admin can login.", variant: "destructive" });
         } else {
-          setUser({ email })
-          toast({ title: "Success", description: "Logged in successfully" })
+          setUser({ email });
+          toast({ title: "Success", description: "Logged in successfully" });
         }
       }
     } catch (err: any) {
-      const msg = err.message || "Authentication failed"
-      setError(msg)
-      toast({ title: "Error", description: msg, variant: "destructive" })
+      const msg = err.message || "Authentication failed";
+      setError(msg);
+      toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleOAuthLogin = (provider: "google" | "github") => {
-    if (!supabase) return
-    setLoading(true)
-    // Run only on client
-    const redirectTo = `${window.location.origin}/admin`
+    if (!supabase) return;
+    setLoading(true);
+    const redirectTo = `${window.location.origin}/admin`;
     supabase.auth.signInWithOAuth({ provider, options: { redirectTo } }).catch((err: any) => {
-      const msg = err.message || `OAuth login failed for ${provider}`
-      setError(msg)
-      toast({ title: "Error", description: msg, variant: "destructive" })
-      setLoading(false)
-    })
-  }
+      const msg = err.message || `OAuth login failed for ${provider}`;
+      setError(msg);
+      toast({ title: "Error", description: msg, variant: "destructive" });
+      setLoading(false);
+    });
+  };
 
   const handleLogout = async () => {
-    if (!supabase) return
-    await supabase.auth.signOut()
-    setUser(null)
-    setEmail("")
-    setPassword("")
-  }
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setUser(null);
+    setEmail("");
+    setPassword("");
+  };
 
   if (loading) {
     return (
@@ -122,7 +123,7 @@ export default function AdminPage() {
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user) {
@@ -159,14 +160,14 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="flex h-screen bg-background">
       <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
       <main className="flex-1 overflow-auto">
-        <div className="p-8">
+        <Suspense fallback={<div className="p-8">Loading content...</div>}>
           {activeTab === "overview" && <DashboardOverview />}
           {activeTab === "hero" && <HeroSettings />}
           {activeTab === "projects" && <ProjectsManager />}
@@ -174,8 +175,8 @@ export default function AdminPage() {
           {activeTab === "collaborators" && <CollaboratorsManager />}
           {activeTab === "messages" && <MessagesManager />}
           {activeTab === "settings" && <AdminSettings userEmail={user.email} />}
-        </div>
+        </Suspense>
       </main>
     </div>
-  )
+  );
 }
