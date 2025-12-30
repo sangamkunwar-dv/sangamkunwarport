@@ -1,14 +1,20 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 export default function Hero() {
+  const router = useRouter()
+
   return (
     <section id="about" className="relative overflow-hidden py-20 sm:py-32">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
+
           {/* Left Content */}
           <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-700">
             <div className="space-y-2">
@@ -29,9 +35,12 @@ export default function Hero() {
                 View My Work
                 <ArrowRight size={18} />
               </Button>
+
+              {/* 👉 Redirect to login page */}
               <Button
                 size="lg"
                 variant="outline"
+                onClick={() => router.push("/auth/login")}
                 className="hover:shadow-lg transition-all duration-300 bg-transparent"
               >
                 Get in Touch
@@ -42,13 +51,13 @@ export default function Hero() {
             <div className="grid grid-cols-3 gap-8 pt-8 border-t border-border">
               <div className="group">
                 <p className="text-2xl sm:text-3xl font-bold text-primary group-hover:scale-110 transition-transform duration-300">
-                  50+
+                  10+
                 </p>
                 <p className="text-sm text-muted-foreground">Projects Completed</p>
               </div>
               <div className="group">
                 <p className="text-2xl sm:text-3xl font-bold text-primary group-hover:scale-110 transition-transform duration-300">
-                  5+
+                  2+
                 </p>
                 <p className="text-sm text-muted-foreground">Years Experience</p>
               </div>
@@ -61,7 +70,7 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Right Image - Added your photo */}
+          {/* Right Image */}
           <div className="relative h-96 sm:h-full min-h-96 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 border border-border flex items-center justify-center group hover:shadow-2xl transition-all duration-500 animate-in fade-in slide-in-from-right-4 duration-700 delay-200">
             <Image
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/sangamkunwar-photo-GXq7pe8eUe2K2gZjVFHR0dsmMu91d4.jpg"
