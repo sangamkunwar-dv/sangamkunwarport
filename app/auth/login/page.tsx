@@ -103,6 +103,15 @@ export default function LoginPage() {
     }
   }
 
+  // ⭐ ZOOM LOGIN FUNCTION
+  const handleZoomLogin = () => {
+    const clientId = "nvShuiEERBmNPdznFhjyqg" // Your Zoom Client ID
+    const redirectUri = `${window.location.origin}/api/zoom/callback`
+
+    const zoomAuthUrl = `https://zoom.us/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`
+    window.location.href = zoomAuthUrl
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md p-8">
@@ -185,6 +194,20 @@ export default function LoginPage() {
               className="w-5 h-5"
             />
             Continue with GitHub
+          </Button>
+
+          {/* ⭐ ZOOM LOGIN BUTTON */}
+          <Button
+            variant="outline"
+            className="w-full flex items-center gap-2 mt-2"
+            onClick={handleZoomLogin}
+          >
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/747/747310.png"
+              alt="Zoom"
+              className="w-5 h-5"
+            />
+            Continue with Zoom
           </Button>
 
           <div className="text-center text-sm pt-2">
