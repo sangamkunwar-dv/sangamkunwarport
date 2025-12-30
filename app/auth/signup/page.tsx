@@ -9,133 +9,156 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Github, Mail } from "lucide-react"
 
 export default function SignupPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
   const [loading, setLoading] = useState(false)
+
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClient()
 
+  // ==============================
+  // Email Signup
+  // ==============================
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    try {
-      console.log("[v0] Attempting signup for:", email)
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
         },
-      })
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
 
-      if (error) {
-        console.error("[v0] Signup error:", error)
-        toast({
-          title: "Signup Failed",
-          description: error.message,
-          variant: "destructive",
-        })
-        return
-      }
-
-      if (data.user) {
-        console.log("[v0] Signup successful, email confirmation required")
-        toast({
-          title: "Account Created!",
-          description: "Please check your email and click the verification link to activate your account.",
-        })
-        
-        // Redirect to verification page after a moment
-        setTimeout(() => {
-          router.push("/auth/verify-email")
-        }, 1500)
-      }
-    } catch (err) {
-      console.error("[v0] Unexpected signup error:", err)
+    if (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred during signup",
+        title: "Signup Failed",
+        description: error.message,
         variant: "destructive",
       })
-    } finally {
       setLoading(false)
+      return
     }
+
+    toast({
+      title: "Account Created 🎉",
+      description: "Please check your email to verify your account.",
+    })
+
+    router.push("/auth/verify-email")
+    setLoading(false)
+  }
+
+  // ==============================
+  // OAuth Signup (Google / GitHub)
+  // ==============================
+  const handleOAuthSignup = async (provider: "google" | "github") => {
+    setLoading(true)
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+
+    if (error) {
+      toast({
+        title: "Signup Error",
+        description: error.message,
+        variant: "destructive",
+      })
+    }
+
+    setLoading(false)
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md p-8">
         <div className="space-y-6">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
+
+          <Link href="/" className="flex items-center gap-2 text-sm text-muted-foreground">
             <ArrowLeft className="w-4 h-4" />
             Back to home
           </Link>
 
           <div className="text-center">
             <h1 className="text-3xl font-bold">Create Account</h1>
-            <p className="text-muted-foreground mt-2">Join to send me messages</p>
+            <p className="text-muted-foreground mt-2">
+              Join to send messages and access dashboard
+            </p>
           </div>
 
+          {/* Email Signup */}
           <form onSubmit={handleSignup} className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Full Name</label>
-              <Input
-                type="text"
-                placeholder="Your name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-              />
-            </div>
+            <Input
+              type="text"
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
 
-            <div>
-              <label className="text-sm font-medium">Email</label>
-              <Input
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
 
-            <div>
-              <label className="text-sm font-medium">Password</label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button className="w-full" disabled={loading}>
               {loading ? "Creating account..." : "Sign Up"}
             </Button>
           </form>
 
-          <div className="text-center text-sm">
-            <p className="text-muted-foreground">
-              Already have an account?{" "}
-              <Link href="/auth/login" className="text-primary hover:underline font-medium">
-                Sign in
-              </Link>
-            </p>
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
           </div>
+
+          {/* OAuth Signup */}
+          <div className="grid grid-cols-2 gap-4">
+            <Button variant="outline" onClick={() => handleOAuthSignup("google")}>
+              <Mail className="mr-2 h-4 w-4" /> Google
+            </Button>
+            <Button variant="outline" onClick={() => handleOAuthSignup("github")}>
+              <Github className="mr-2 h-4 w-4" /> GitHub
+            </Button>
+          </div>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/auth/login" className="text-primary font-medium hover:underline">
+              Sign in
+            </Link>
+          </p>
+
         </div>
       </Card>
     </div>
