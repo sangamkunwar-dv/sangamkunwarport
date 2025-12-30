@@ -1,11 +1,9 @@
-"use client"; // <- Make this layout a client component
-
 import type React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/theme-provider";
-import UltraProtection from "@/components/UltraProtection"; // client-only protection
+import UltraProtectionWrapper from "@/components/UltraProtectionWrapper"; // <- client wrapper
 import "./globals.css";
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -37,7 +35,7 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         {/* Ultra protection */}
-        <UltraProtection />
+        <UltraProtectionWrapper />
         {/* Theme and content */}
         <ThemeProvider>{children}</ThemeProvider>
         <Analytics />
