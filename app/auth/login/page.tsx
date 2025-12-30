@@ -9,198 +9,192 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Github, Mail } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const [forgotPassword, setForgotPassword] = useState(false)
-
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClient()
 
-  // ==============================
-  // OAuth Login (Google / GitHub)
-  // ==============================
-  const handleOAuthLogin = async (provider: "google" | "github") => {
-    setLoading(true)
+  // ⭐ GOOGLE LOGIN FUNCTION
+  const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider,
+      provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/dashboard`,
       },
     })
 
     if (error) {
       toast({
-        title: "Login Error",
+        title: "Google Login Failed",
         description: error.message,
         variant: "destructive",
       })
     }
-    setLoading(false)
   }
 
-  // ==============================
-  // Email & Password Login
-  // ==============================
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error || !data.user) {
-      toast({
-        title: "Login Failed",
-        description: error?.message || "Something went wrong",
-        variant: "destructive",
-      })
-      setLoading(false)
-      return
-    }
-
-    if (!data.user.email_confirmed_at) {
-      toast({
-        title: "Email Not Verified",
-        description: "Please verify your email first.",
-        variant: "destructive",
-      })
-      await supabase.auth.signOut()
-      setLoading(false)
-      return
-    }
-
-    toast({
-      title: "Success",
-      description: "Logged in successfully!",
-    })
-
-    router.push("/dashboard")
-    setLoading(false)
-  }
-
-  // ==============================
-  // Forgot Password
-  // ==============================
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+  // ⭐ GITHUB LOGIN FUNCTION
+  const handleGithubLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
     })
 
     if (error) {
       toast({
-        title: "Error",
+        title: "GitHub Login Failed",
         description: error.message,
         variant: "destructive",
       })
-    } else {
-      toast({
-        title: "Email Sent",
-        description: "Check your inbox for reset link",
-      })
-      setForgotPassword(false)
     }
+  }
 
-    setLoading(false)
+  // ⭐ EMAIL + PASSWORD LOGIN
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) {
+        toast({
+          title: "Error",
+          description: signInError.message,
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (signInData.user && !signInData.user.email_confirmed_at) {
+        toast({
+          title: "Email Not Verified",
+          description: "Please verify your email before logging in.",
+          variant: "destructive",
+        })
+        await supabase.auth.signOut()
+        return
+      }
+
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+      })
+
+      router.push("/dashboard")
+    } catch (err) {
+      console.error("[Login Error]:", err)
+      toast({
+        title: "Error",
+        description: "An error occurred during login",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md p-8">
         <div className="space-y-6">
-
-          <Link href="/" className="flex items-center gap-2 text-sm text-muted-foreground">
-            <ArrowLeft className="w-4 h-4" /> Back to home
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
           </Link>
 
           <div className="text-center">
-            <h1 className="text-3xl font-bold">
-              {forgotPassword ? "Reset Password" : "Welcome Back"}
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              {forgotPassword
-                ? "Enter email to receive reset link"
-                : "Sign in to your account"}
-            </p>
+            <h1 className="text-3xl font-bold">Welcome Back</h1>
+            <p className="text-muted-foreground mt-2">Sign in to your account</p>
           </div>
 
-          {!forgotPassword ? (
-            <>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-
-                <div className="text-right">
-                  <button
-                    type="button"
-                    onClick={() => setForgotPassword(true)}
-                    className="text-xs text-primary"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-
-                <Button className="w-full" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign In"}
-                </Button>
-              </form>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" onClick={() => handleOAuthLogin("google")}>
-                  <Mail className="mr-2 h-4 w-4" /> Google
-                </Button>
-                <Button variant="outline" onClick={() => handleOAuthLogin("github")}>
-                  <Github className="mr-2 h-4 w-4" /> GitHub
-                </Button>
-              </div>
-            </>
-          ) : (
-            <form onSubmit={handleForgotPassword} className="space-y-4">
+          {/* ⭐ EMAIL LOGIN FORM */}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Email</label>
               <Input
                 type="email"
-                placeholder="Email"
+                placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <Button className="w-full" disabled={loading}>
-                Send Reset Link
-              </Button>
-              <Button variant="ghost" onClick={() => setForgotPassword(false)}>
-                Back to Login
-              </Button>
-            </form>
-          )}
+            </div>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link href="/auth/signup" className="text-primary font-medium">
-              Sign up
-            </Link>
-          </p>
+            <div>
+              <label className="text-sm font-medium">Password</label>
+              <Input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
 
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
+          </form>
+
+          {/* ⭐ DIVIDER */}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">or</span>
+            </div>
+          </div>
+
+          {/* ⭐ GOOGLE LOGIN BUTTON */}
+          <Button
+            variant="outline"
+            className="w-full flex items-center gap-2"
+            onClick={handleGoogleLogin}
+          >
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google"
+              className="w-5 h-5"
+            />
+            Continue with Google
+          </Button>
+
+          {/* ⭐ GITHUB LOGIN BUTTON */}
+          <Button
+            variant="outline"
+            className="w-full flex items-center gap-2 mt-2"
+            onClick={handleGithubLogin}
+          >
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/25/25231.png"
+              alt="GitHub"
+              className="w-5 h-5"
+            />
+            Continue with GitHub
+          </Button>
+
+          <div className="text-center text-sm pt-2">
+            <p className="text-muted-foreground">
+              Don't have an account?{" "}
+              <Link href="/auth/signup" className="text-primary hover:underline font-medium">
+                Sign up
+              </Link>
+            </p>
+          </div>
         </div>
       </Card>
     </div>

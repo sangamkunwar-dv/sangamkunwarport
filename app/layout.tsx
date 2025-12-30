@@ -1,41 +1,44 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import { ThemeProvider } from "@/components/theme-provider"
-import "./globals.css"
+import type React from "react";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { ThemeProvider } from "@/components/theme-provider";
+import "./globals.css";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist" })
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
+const _geist = Geist({ subsets: ["latin"] });
+const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sangam Kunwar | Portfolio",
-  description: "Professional portfolio of Sangam Kunwar - Full Stack Developer",
+  title: "Sangam Kunwar - Full Stack Developer",
+  description: "It's me Sangam Kunwar - Full Stack Developer",
+  generator: "sangamkunwar",
   icons: {
-    icon: "/logo.png", // ✅ logo next to title
+    icon: "/sangamkunwarphotos.png",       
+    shortcut: "/sangamkunwarphotos.png",    
+    apple: "/sangamkunwarphotos.png",       
   },
-}
+};
+
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geist.variable} ${geistMono.variable} font-sans antialiased`}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+      <head>
+        {/* Optional: For Apple touch icon */}
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/sangamkunwarphoto.jpeg"
+        />
+      </head>
+      <body className="font-sans antialiased">
+        <ThemeProvider>{children}</ThemeProvider>
         <Analytics />
       </body>
     </html>
-  )
+  );
 }
